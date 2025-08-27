@@ -76,8 +76,9 @@ pub enum AppendBucketResult {
 
 rustler::init!("Elixir.Discord.SortedSet.NifBridge", load = load);
 
+#[allow(non_local_definitions)]
 fn load(env: Env, _info: Term) -> bool {
-    rustler::resource!(SortedSetResource, env);
+    assert!(rustler::resource!(SortedSetResource, env));
     true
 }
 
