@@ -27,6 +27,7 @@ mod atoms {
 
         // Resource Atoms
         bad_reference,
+        lock_fail,
 
         // Success Atoms
         added,
@@ -100,7 +101,10 @@ fn append_bucket(resource: ResourceArc<SortedSetResource>, term: Term) -> Result
         _ => return Err(atoms::unsupported_type()),
     };
 
-    let mut set = resource.0.lock().expect("Failed to acquire lock on SortedSet for append_bucket");
+    let mut set = match resource.0.try_lock() {
+        Err(_) => return Err(atoms::lock_fail()),
+        Ok(guard) => guard,
+    };
 
     match set.append_bucket(items) {
         Ok(()) => Ok(atoms::ok()),
@@ -116,7 +120,10 @@ fn add(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom, us
         Some(term) => term,
     };
 
-    let mut set = resource.0.lock().expect("Failed to acquire lock on SortedSet for add");
+    let mut set = match resource.0.try_lock() {
+        Err(_) => return Err(atoms::lock_fail()),
+        Ok(guard) => guard,
+    };
 
     match set.add(item) {
         Ok(idx) => Ok((atoms::added(), idx)),
@@ -132,7 +139,10 @@ fn remove(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom,
         Some(term) => term,
     };
 
-    let mut set = resource.0.lock().expect("Failed to acquire lock on SortedSet for remove");
+    let mut set = match resource.0.try_lock() {
+        Err(_) => return Err(atoms::lock_fail()),
+        Ok(guard) => guard,
+    };
 
     match set.remove(&item) {
         Ok(idx) => Ok((atoms::removed(), idx)),
@@ -143,21 +153,30 @@ fn remove(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom,
 
 #[rustler::nif]
 fn size(resource: ResourceArc<SortedSetResource>) -> Result<usize, Atom> {
-    let set = resource.0.lock().expect("Failed to acquire lock on SortedSet for size");
+    let set = match resource.0.try_lock() {
+        Err(_) => return Err(atoms::lock_fail()),
+        Ok(guard) => guard,
+    };
 
     Ok(set.size())
 }
 
 #[rustler::nif]
 fn to_list(resource: ResourceArc<SortedSetResource>) -> Result<Vec<SupportedTerm>, Atom> {
-    let set = resource.0.lock().expect("Failed to acquire lock on SortedSet for to_list");
+    let set = match resource.0.try_lock() {
+        Err(_) => return Err(atoms::lock_fail()),
+        Ok(guard) => guard,
+    };
 
     Ok(set.to_vec())
 }
 
 #[rustler::nif]
 fn at(resource: ResourceArc<SortedSetResource>, index: usize) -> Result<SupportedTerm, Atom> {
-    let set = resource.0.lock().expect("Failed to acquire lock on SortedSet for at");
+    let set = match resource.0.try_lock() {
+        Err(_) => return Err(atoms::lock_fail()),
+        Ok(guard) => guard,
+    };
 
     match set.at(index) {
         None => Err(atoms::index_out_of_bounds()),
@@ -171,7 +190,10 @@ fn slice(
     start: usize,
     amount: usize,
 ) -> Result<Vec<SupportedTerm>, Atom> {
-    let set = resource.0.lock().expect("Failed to acquire lock on SortedSet for slice");
+    let set = match resource.0.try_lock() {
+        Err(_) => return Err(atoms::lock_fail()),
+        Ok(guard) => guard,
+    };
 
     Ok(set.slice(start, amount))
 }
@@ -183,7 +205,10 @@ fn find_index(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<us
         Some(term) => term,
     };
 
-    let set = resource.0.lock().expect("Failed to acquire lock on SortedSet for find_index");
+    let set = match resource.0.try_lock() {
+        Err(_) => return Err(atoms::lock_fail()),
+        Ok(guard) => guard,
+    };
 
     match set.find_index(&item) {
         Ok(FoundData { idx, .. }) => Ok(idx),
@@ -194,7 +219,10 @@ fn find_index(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<us
 
 #[rustler::nif]
 fn debug(resource: ResourceArc<SortedSetResource>) -> Result<String, Atom> {
-    let set = resource.0.lock().expect("Failed to acquire lock on SortedSet for debug");
+    let set = match resource.0.try_lock() {
+        Err(_) => return Err(atoms::lock_fail()),
+        Ok(guard) => guard,
+    };
 
     Ok(set.debug())
 }
