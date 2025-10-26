@@ -69,7 +69,7 @@ fn load(env: Env, _info: Term) -> bool {
     true
 }
 
-#[rustler::nif(schedule = "DirtyCpu")]
+#[rustler::nif]
 fn empty(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedSetArc) {
     let initial_set_capacity: usize = (initial_item_capacity / max_bucket_size) + 1;
 
@@ -82,7 +82,7 @@ fn empty(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedS
     (atoms::ok(), resource)
 }
 
-#[rustler::nif(schedule = "DirtyCpu")]
+#[rustler::nif]
 fn new(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedSetArc) {
     let initial_set_capacity: usize = (initial_item_capacity / max_bucket_size) + 1;
 
@@ -93,7 +93,7 @@ fn new(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedSet
     (atoms::ok(), resource)
 }
 
-#[rustler::nif(schedule = "DirtyCpu")]
+#[rustler::nif]
 fn append_bucket(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<Atom, Atom> {
     let items = match convert_to_supported_term(&term) {
         Some(SupportedTerm::List(terms)) => terms,
@@ -109,7 +109,7 @@ fn append_bucket(resource: ResourceArc<SortedSetResource>, term: Term) -> Result
     }
 }
 
-#[rustler::nif(schedule = "DirtyCpu")]
+#[rustler::nif]
 fn add(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom, usize), Atom> {
     let item = match convert_to_supported_term(&term) {
         None => return Err(atoms::unsupported_type()),
@@ -125,7 +125,7 @@ fn add(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom, us
     }
 }
 
-#[rustler::nif(schedule = "DirtyCpu")]
+#[rustler::nif]
 fn remove(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom, usize), Atom> {
     let item = match convert_to_supported_term(&term) {
         None => return Err(atoms::unsupported_type()),
@@ -141,21 +141,21 @@ fn remove(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom,
     }
 }
 
-#[rustler::nif(schedule = "DirtyCpu")]
+#[rustler::nif]
 fn size(resource: ResourceArc<SortedSetResource>) -> Result<usize, Atom> {
     let set = resource.0.lock().expect("Failed to acquire lock on SortedSet for size");
 
     Ok(set.size())
 }
 
-#[rustler::nif(schedule = "DirtyCpu")]
+#[rustler::nif]
 fn to_list(resource: ResourceArc<SortedSetResource>) -> Result<Vec<SupportedTerm>, Atom> {
     let set = resource.0.lock().expect("Failed to acquire lock on SortedSet for to_list");
 
     Ok(set.to_vec())
 }
 
-#[rustler::nif(schedule = "DirtyCpu")]
+#[rustler::nif]
 fn at(resource: ResourceArc<SortedSetResource>, index: usize) -> Result<SupportedTerm, Atom> {
     let set = resource.0.lock().expect("Failed to acquire lock on SortedSet for at");
 
@@ -165,7 +165,7 @@ fn at(resource: ResourceArc<SortedSetResource>, index: usize) -> Result<Supporte
     }
 }
 
-#[rustler::nif(schedule = "DirtyCpu")]
+#[rustler::nif]
 fn slice(
     resource: ResourceArc<SortedSetResource>,
     start: usize,
@@ -176,7 +176,7 @@ fn slice(
     Ok(set.slice(start, amount))
 }
 
-#[rustler::nif(schedule = "DirtyCpu")]
+#[rustler::nif]
 fn find_index(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<usize, Atom> {
     let item = match convert_to_supported_term(&term) {
         None => return Err(atoms::unsupported_type()),
@@ -192,7 +192,7 @@ fn find_index(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<us
     }
 }
 
-#[rustler::nif(schedule = "DirtyCpu")]
+#[rustler::nif]
 fn debug(resource: ResourceArc<SortedSetResource>) -> Result<String, Atom> {
     let set = resource.0.lock().expect("Failed to acquire lock on SortedSet for debug");
 

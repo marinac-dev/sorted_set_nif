@@ -24,7 +24,7 @@ impl Configuration {
         }
     }
 
-    #[allow(dead_code)]
+    #[cfg_attr(not(test), allow(dead_code))]
     pub fn with_max_bucket_size(max_bucket_size: usize) -> Self {
         Self::new(max_bucket_size, 0)
     }
