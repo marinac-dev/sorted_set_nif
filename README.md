@@ -127,5 +127,160 @@ defmodule ExampleModule do
 end
 ```
 
+## Common Use Cases
+
+### Maintaining a Sorted Leaderboard
+
+```elixir
+alias Discord.SortedSet
+
+# Create a leaderboard with custom bucket size
+leaderboard = SortedSet.new(1000, 250)
+
+# Add scores and get their positions
+{position, leaderboard} = SortedSet.index_add(leaderboard, {:score, 1500, "player1"})
+# position might be 0 if this is the first/lowest score
+
+# Get top 10 players
+top_10 = SortedSet.slice(leaderboard, 0, 10)
+
+# Find a specific player's rank
+rank = SortedSet.find_index(leaderboard, {:score, 1500, "player1"})
+
+# Get the player at rank 5
+player = SortedSet.at(leaderboard, 5)
+```
+
+### Tracking Changes with Index Information
+
+```elixir
+# When adding an item, know where it was inserted
+{index, set} = SortedSet.index_add(set, "banana")
+# Now you can notify: "Item inserted at position #{index}"
+
+# When removing an item, know where it was
+{index, set} = SortedSet.index_remove(set, "banana")
+# Now you can notify: "Item removed from position #{index}"
+```
+
+### Bulk Construction for Better Performance
+
+```elixir
+# If you have a large pre-sorted, deduplicated list
+items = [1, 2, 3, 4, 5]  # already sorted and unique
+set = SortedSet.from_proper_enumerable(items)
+
+# If your list might have duplicates or isn't sorted
+mixed_items = [5, 2, 3, 2, 1, 4]
+set = SortedSet.from_enumerable(mixed_items)
+# Much faster than adding one-by-one
+```
+
+### Working with Slices and Random Access
+
+```elixir
+# Get a page of results (pagination)
+page_size = 20
+page_number = 2
+items = SortedSet.slice(set, page_number * page_size, page_size)
+
+# Get a specific item by position
+middle_item = SortedSet.at(set, div(SortedSet.size(set), 2))
+
+# Safe access with default
+item = SortedSet.at(set, 1000, :not_found)  # returns :not_found if out of bounds
+```
+
+## Complete API Overview
+
+| Function | Description | Performance |
+|----------|-------------|-------------|
+| `new/2` | Create empty set | O(1) |
+| `from_enumerable/2` | Create from any list | O(N log N) |
+| `from_proper_enumerable/2` | Create from sorted, deduped list | O(N) |
+| `add/2` | Add item | O(log N) |
+| `index_add/2` | Add item, return index | O(log N) |
+| `remove/2` | Remove item | O(log N) |
+| `index_remove/2` | Remove item, return index | O(log N) |
+| `size/1` | Get size | O(1) |
+| `at/3` | Get item at index | O(log N) |
+| `slice/3` | Get range of items | O(log N + K) where K is slice size |
+| `find_index/2` | Find item's index | O(log N) |
+| `to_list/1` | Convert to list | O(N) |
+
+## Performance Tuning
+
+The `bucket_size` parameter can be tuned for your use case:
+
+- **Smaller buckets (100-250)**: Better for sets that are frequently modified
+- **Default bucket (500)**: Good balance for most use cases  
+- **Larger buckets (1000+)**: Better for large, mostly static sets
+
+```elixir
+# For frequently updated sets
+active_set = SortedSet.new(1000, 250)
+
+# For large, rarely modified sets
+archive_set = SortedSet.new(10000, 1000)
+```
+
+## Advanced Usage Patterns
+
+### Efficient Batch Operations
+
+```elixir
+# When you have a large dataset, use bulk construction
+large_dataset = Enum.to_list(1..10000)
+sorted_set = SortedSet.from_enumerable(large_dataset)
+
+# Much more efficient than:
+sorted_set = Enum.reduce(large_dataset, SortedSet.new(), &SortedSet.add(&2, &1))
+```
+
+### Memory-Efficient Iteration
+
+```elixir
+# Instead of converting to list (expensive), use slices for iteration
+defmodule Pagination do
+  def paginate(set, page_size) do
+    total_size = SortedSet.size(set)
+    total_pages = div(total_size + page_size - 1, page_size)
+    
+    for page <- 0..(total_pages - 1) do
+      start_index = page * page_size
+      SortedSet.slice(set, start_index, page_size)
+    end
+  end
+end
+```
+
+### Index-Based Operations for Real-Time Updates
+
+```elixir
+defmodule LiveLeaderboard do
+  def update_score(leaderboard, player, new_score) do
+    old_entry = {player, _old_score}
+    new_entry = {player, new_score}
+    
+    # Remove old score and get its position
+    {old_index, leaderboard} = SortedSet.index_remove(leaderboard, old_entry)
+    
+    # Add new score and get its position  
+    {new_index, leaderboard} = SortedSet.index_add(leaderboard, new_entry)
+    
+    # Notify about position change
+    if old_index != new_index do
+      notify_position_change(player, old_index, new_index)
+    end
+    
+    leaderboard
+  end
+  
+  defp notify_position_change(player, old_pos, new_pos) do
+    IO.puts("#{player} moved from position #{old_pos} to #{new_pos}")
+  end
+end
+```
+
 Full API Documentation is available, there is also a full test suite with examples of how the 
 library can be used.
