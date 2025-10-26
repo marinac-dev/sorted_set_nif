@@ -21,7 +21,7 @@ end
 make_input = fn {size, cell_size, position} ->
   set =
     1..size
-    |> Stream.map(&(&1 * 10_000))
+    |> Enum.map(&(&1 * 10_000))
     |> Discord.SortedSet.from_proper_enumerable(cell_size)
 
   item =
