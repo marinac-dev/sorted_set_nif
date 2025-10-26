@@ -115,7 +115,7 @@ defmodule Discord.SortedSet do
   @spec add(set :: t(), item :: Types.supported_term()) :: t() | Types.common_errors()
   def add(set, item) do
     case NifBridge.add(set, item) do
-      {:ok, {:ok, _, _}} ->
+      {:ok, {_, _}} ->
         set
 
       other ->
@@ -138,10 +138,10 @@ defmodule Discord.SortedSet do
           {index :: non_neg_integer() | nil, t()} | Types.common_errors()
   def index_add(set, item) do
     case NifBridge.add(set, item) do
-      {:ok, {:ok, :added, index}} ->
+      {:ok, {:added, index}} ->
         {index, set}
 
-      {:ok, {:ok, :duplicate, _}} ->
+      {:ok, {:duplicate, _}} ->
         {nil, set}
 
       other ->
